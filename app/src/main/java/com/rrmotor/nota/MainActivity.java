@@ -2586,4 +2586,236 @@ public class MainActivity extends Activity {
                 .replace("💵", "")
                 .replace("💰", "")
                 .replace("💳", "")
-                .replace("📌",
+                .replace("📌", "")
+                .replace("🔵", "")
+                .replace("🖨️", "")
+                .replace("❌", "")
+                .replace("================================", "--------------------------------");
+    }
+
+    // =========================================================
+    // WHATSAPP
+    // =========================================================
+
+    private void kirimWhatsApp() {
+
+        String nomor =
+                waInput.getText()
+                        .toString()
+                        .trim();
+
+        if (nomor.isEmpty()) {
+
+            Toast.makeText(
+                    this,
+                    "No. WhatsApp wajib diisi.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        nomor =
+                bersihkanNomor(nomor);
+
+        String pesan =
+                buatIsiNota();
+
+        try {
+
+            String url =
+                    "https://wa.me/"
+                            + nomor
+                            + "?text="
+                            + URLEncoder.encode(
+                                    pesan,
+                                    "UTF-8"
+                            );
+
+            Intent intent =
+                    new Intent(
+                            Intent.ACTION_VIEW
+                    );
+
+            intent.setData(
+                    android.net.Uri.parse(url)
+            );
+
+            startActivity(intent);
+
+        } catch (Exception e) {
+
+            Toast.makeText(
+                    this,
+                    "WhatsApp tidak dapat dibuka.",
+                    Toast.LENGTH_SHORT
+            ).show();
+        }
+    }
+
+    private String bersihkanNomor(
+            String nomor
+    ) {
+
+        nomor =
+                nomor.replaceAll(
+                        "[^0-9+]",
+                        ""
+                );
+
+        if (nomor.startsWith("+")) {
+            nomor =
+                    nomor.substring(1);
+        }
+
+        if (nomor.startsWith("0")) {
+
+            nomor =
+                    "62"
+                            + nomor.substring(1);
+        }
+
+        return nomor;
+    }
+
+    // =========================================================
+    // BERSIHKAN RIWAYAT LAMA
+    // =========================================================
+
+    private void bersihkanRiwayatLama() {
+
+        String history =
+                prefs.getString(
+                        KEY_HISTORY,
+                        ""
+                );
+
+        if (history.isEmpty()) {
+            return;
+        }
+
+        long batas =
+                System.currentTimeMillis()
+                        - (
+                        365L
+                                * 24L
+                                * 60L
+                                * 60L
+                                * 1000L
+                );
+
+        StringBuilder baru =
+                new StringBuilder();
+
+        String[] semua =
+                history.split(
+                        "\n",
+                        -1
+                );
+
+        for (String data : semua) {
+
+            try {
+
+                String[] p =
+                        data.split(
+                                "\\|",
+                                -1
+                        );
+
+                long waktu =
+                        Long.parseLong(p[0]);
+
+                if (waktu >= batas) {
+
+                    if (baru.length() > 0) {
+                        baru.append("\n");
+                    }
+
+                    baru.append(data);
+                }
+
+            } catch (Exception ignored) {
+            }
+        }
+
+        prefs.edit()
+                .putString(
+                        KEY_HISTORY,
+                        baru.toString()
+                )
+                .apply();
+    }
+
+    // =========================================================
+    // ENCODE
+    // =========================================================
+
+    private String encode(String teks) {
+
+        try {
+
+            return URLEncoder.encode(
+                    teks,
+                    "UTF-8"
+            );
+
+        } catch (Exception e) {
+
+            return teks;
+        }
+    }
+
+    private String decode(String teks) {
+
+        try {
+
+            return java.net.URLDecoder.decode(
+                    teks,
+                    "UTF-8"
+            );
+
+        } catch (Exception e) {
+
+            return teks;
+        }
+    }
+
+    // =========================================================
+    // DATA
+    // =========================================================
+
+    private static class Item {
+
+        String nama = "";
+
+        long jumlah = 0;
+
+        long harga = 0;
+
+        long subtotal = 0;
+    }
+
+    private static class Nota {
+
+        long timestamp = 0;
+
+        String nama = "";
+
+        String wa = "";
+
+        String tanggal = "";
+
+        String motor = "";
+
+        long dp = 0;
+
+        long total = 0;
+
+        String status =
+                "BELUM LUNAS";
+
+        ArrayList<Item> items =
+                new ArrayList<>();
+    }
+}
