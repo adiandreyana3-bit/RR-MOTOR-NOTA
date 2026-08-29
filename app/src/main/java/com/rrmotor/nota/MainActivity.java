@@ -162,6 +162,7 @@ public class MainActivity extends Activity {
 
         dpInput = buatInput("Uang Muka / DP");
         dpInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+
         dpInput.setOnFocusChangeListener(
                 (v, hasFocus) -> {
                     if (!hasFocus) {
@@ -169,6 +170,7 @@ public class MainActivity extends Activity {
                     }
                 }
         );
+
         utama.addView(dpInput);
 
         sisaText = buatHasilText("SISA PEMBAYARAN: Rp0");
@@ -562,7 +564,7 @@ public class MainActivity extends Activity {
     }
 
     // =========================================================
-    // STATUS PEMBAYARAN
+    // STATUS
     // =========================================================
 
     private void pilihStatus() {
@@ -1077,6 +1079,22 @@ public class MainActivity extends Activity {
                 );
 
                 layout.addView(cetakBT);
+
+                // =================================================
+                // TAMBAHAN BARU:
+                // KIRIM NOTA RIWAYAT VIA WHATSAPP
+                // =================================================
+
+                Button whatsapp =
+                        buatTombol(
+                                "📱 KIRIM VIA WHATSAPP"
+                        );
+
+                whatsapp.setOnClickListener(
+                        v -> kirimWhatsAppNota(nota)
+                );
+
+                layout.addView(whatsapp);
 
                 Button hapus =
                         buatTombol(
@@ -1688,7 +1706,7 @@ public class MainActivity extends Activity {
     }
 
     // =========================================================
-    // CETAK ANDROID
+    // CETAK ANDROID - KERTAS 50 MM
     // =========================================================
 
     private void cetakNotaSekarang() {
@@ -1727,15 +1745,16 @@ public class MainActivity extends Activity {
         try {
 
             /*
-             * Ukuran 80 mm.
-             * 80 mm = sekitar 3150 mil.
+             * KERTAS 50 MM
+             *
+             * 50 mm = sekitar 1969 mil
              */
 
             PrintAttributes.MediaSize ukuran =
                     new PrintAttributes.MediaSize(
-                            "RR_MOTOR_80MM",
-                            "80 mm",
-                            3150,
+                            "RR_MOTOR_50MM",
+                            "50 mm",
+                            1969,
                             10000
                     );
 
@@ -1768,7 +1787,7 @@ public class MainActivity extends Activity {
     }
 
     // =========================================================
-    // ISI NOTA DARI FORM
+    // ISI NOTA FORM
     // =========================================================
 
     private String buatIsiNota() {
@@ -1787,7 +1806,7 @@ public class MainActivity extends Activity {
                 new StringBuilder();
 
         sb.append(
-                "================================\n"
+                "--------------------------------\n"
         );
 
         sb.append(
@@ -1799,7 +1818,7 @@ public class MainActivity extends Activity {
         );
 
         sb.append(
-                "================================\n"
+                "--------------------------------\n"
         );
 
         sb.append(
@@ -1875,7 +1894,7 @@ public class MainActivity extends Activity {
         );
 
         sb.append(
-                "================================\n"
+                "--------------------------------\n"
         );
 
         sb.append(
@@ -1961,7 +1980,7 @@ public class MainActivity extends Activity {
                 new StringBuilder();
 
         sb.append(
-                "================================\n"
+                "--------------------------------\n"
         );
 
         sb.append(
@@ -1973,7 +1992,7 @@ public class MainActivity extends Activity {
         );
 
         sb.append(
-                "================================\n"
+                "--------------------------------\n"
         );
 
         sb.append(
@@ -2065,7 +2084,7 @@ public class MainActivity extends Activity {
         );
 
         sb.append(
-                "================================\n"
+                "--------------------------------\n"
         );
 
         sb.append(
@@ -2335,7 +2354,7 @@ public class MainActivity extends Activity {
     }
 
     // =========================================================
-    // CETAK LANGSUNG RPPO2N 80 MM
+    // CETAK BLUETOOTH
     // =========================================================
 
     private void cetakKePrinter(
@@ -2348,9 +2367,11 @@ public class MainActivity extends Activity {
             boolean berhasil = false;
             Exception errorTerakhir = null;
 
-            for (int percobaan = 1;
-                 percobaan <= 3;
-                 percobaan++) {
+            for (
+                    int percobaan = 1;
+                    percobaan <= 3;
+                    percobaan++
+            ) {
 
                 BluetoothSocket socket = null;
                 OutputStream output = null;
@@ -2374,11 +2395,6 @@ public class MainActivity extends Activity {
                     BluetoothAdapter adapter =
                             BluetoothAdapter.getDefaultAdapter();
 
-                    /*
-                     * Sangat penting:
-                     * hentikan discovery sebelum connect.
-                     */
-
                     try {
 
                         if (adapter != null
@@ -2391,7 +2407,7 @@ public class MainActivity extends Activity {
                     }
 
                     /*
-                     * Buat socket baru.
+                     * Koneksi normal SPP.
                      */
 
                     socket =
@@ -2399,17 +2415,13 @@ public class MainActivity extends Activity {
                                     SPP_UUID
                             );
 
-                    /*
-                     * Coba koneksi.
-                     */
-
                     socket.connect();
 
                     output =
                             socket.getOutputStream();
 
                     /*
-                     * Reset printer.
+                     * RESET PRINTER
                      */
 
                     output.write(
@@ -2420,7 +2432,7 @@ public class MainActivity extends Activity {
                     );
 
                     /*
-                     * Ukuran normal.
+                     * NORMAL PRINT
                      */
 
                     output.write(
@@ -2432,7 +2444,7 @@ public class MainActivity extends Activity {
                     );
 
                     /*
-                     * Rata kiri.
+                     * ALIGN LEFT
                      */
 
                     output.write(
@@ -2444,14 +2456,25 @@ public class MainActivity extends Activity {
                     );
 
                     /*
-                     * Cetak isi nota.
-                     *
-                     * ISO-8859-1 lebih aman untuk
-                     * banyak printer thermal Bluetooth.
+                     * Hapus karakter yang
+                     * tidak didukung printer.
                      */
 
                     String teks =
                             hapusEmojiUntukPrinter(isi);
+
+                    /*
+                     * Normalisasi baris.
+                     */
+
+                    teks =
+                            teks.replace(
+                                    "\r\n",
+                                    "\n"
+                            ).replace(
+                                    "\r",
+                                    "\n"
+                            );
 
                     output.write(
                             teks.getBytes(
@@ -2460,28 +2483,16 @@ public class MainActivity extends Activity {
                     );
 
                     /*
-                     * Feed kertas.
+                     * FEED
                      */
 
                     output.write(
                             new byte[]{
+                                    0x0A,
                                     0x0A,
                                     0x0A,
                                     0x0A,
                                     0x0A
-                            }
-                    );
-
-                    /*
-                     * Potong kertas jika printer
-                     * mendukung cutter.
-                     */
-
-                    output.write(
-                            new byte[]{
-                                    0x1D,
-                                    0x56,
-                                    0x00
                             }
                     );
 
@@ -2519,13 +2530,8 @@ public class MainActivity extends Activity {
                     } catch (Exception ignored) {
                     }
 
-                    /*
-                     * Tunggu sebentar sebelum
-                     * mencoba koneksi berikutnya.
-                     */
-
                     try {
-                        Thread.sleep(800);
+                        Thread.sleep(1000);
                     } catch (InterruptedException ignored) {
                     }
                 }
@@ -2550,7 +2556,7 @@ public class MainActivity extends Activity {
 
                     Toast.makeText(
                             this,
-                            "✅ Nota berhasil dicetak ke Sanpidie 80 mm.",
+                            "✅ Nota berhasil dicetak.",
                             Toast.LENGTH_LONG
                     ).show();
 
@@ -2572,13 +2578,9 @@ public class MainActivity extends Activity {
             String teks
     ) {
 
-        /*
-         * Printer thermal murah biasanya
-         * tidak mendukung emoji.
-         */
-
         return teks
                 .replace("🏍️", "")
+                .replace("🏍", "")
                 .replace("🧾", "")
                 .replace("👤", "")
                 .replace("📱", "")
@@ -2589,12 +2591,12 @@ public class MainActivity extends Activity {
                 .replace("📌", "")
                 .replace("🔵", "")
                 .replace("🖨️", "")
-                .replace("❌", "")
-                .replace("================================", "--------------------------------");
+                .replace("🖨", "")
+                .replace("❌", "");
     }
 
     // =========================================================
-    // WHATSAPP
+    // WHATSAPP DARI FORM
     // =========================================================
 
     private void kirimWhatsApp() {
@@ -2620,6 +2622,64 @@ public class MainActivity extends Activity {
 
         String pesan =
                 buatIsiNota();
+
+        bukaWhatsApp(
+                nomor,
+                pesan
+        );
+    }
+
+    // =========================================================
+    // WHATSAPP DARI RIWAYAT
+    // =========================================================
+
+    private void kirimWhatsAppNota(
+            Nota nota
+    ) {
+
+        if (nota == null) {
+
+            Toast.makeText(
+                    this,
+                    "Data nota tidak ditemukan.",
+                    Toast.LENGTH_SHORT
+            ).show();
+
+            return;
+        }
+
+        String nomor =
+                nota.wa == null
+                        ? ""
+                        : nota.wa.trim();
+
+        if (nomor.isEmpty()) {
+
+            Toast.makeText(
+                    this,
+                    "Nomor WhatsApp pada nota kosong.",
+                    Toast.LENGTH_LONG
+            ).show();
+
+            return;
+        }
+
+        nomor =
+                bersihkanNomor(nomor);
+
+        String pesan =
+                buatIsiNota(nota);
+
+        bukaWhatsApp(
+                nomor,
+                pesan
+        );
+    }
+
+    private void bukaWhatsApp(
+            String nomor,
+            String pesan
+    ) {
 
         try {
 
@@ -2664,6 +2724,7 @@ public class MainActivity extends Activity {
                 );
 
         if (nomor.startsWith("+")) {
+
             nomor =
                     nomor.substring(1);
         }
